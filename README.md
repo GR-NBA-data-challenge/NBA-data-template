@@ -4,10 +4,18 @@
 
 This is the template of the given code.
 
-Instructions:
-* Fork this repository
-* Make it private
-* Add `GR-NBA-data-challenge` as a collaborator
+Instructions to obtain the skeleton repository:
+First, create a repository on your personal GitHub account, named for example `NBAChallenge`.
+Follow the instructions to create a duplicate of our template.
+Please notice that if you choose to Fork, you won't be able to set the forked repository to Private.
+```
+git clone --bare https://github.com/GR-NBA-data-challenge/NBA-data-template.git
+cd NBA-data-template.git
+git push --mirror https://github.com/YOURUSERNAME/NBAChallenge.git
+cd ..
+rm -rf NBA-data-template.git
+```
+Add `GRNBADataChallengeReader` as a collaborator
 
 This allows us to access your code while keeping it secret from other participants.
 
