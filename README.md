@@ -31,6 +31,6 @@ Datapacks are automatically downloaded by `simulate.py` and cached into your `da
 
 # Requirements and additional packages
 
-We will run Python 3.6, on an AWS instance `t3a.xlarge`. While the instances have 16GB of RAM, please keep in mind that some of it will be reserved to our host software.
+We will run Python 3.6, on an AWS instance with 4 vcores and 16GB of RAM. While the instances have 16GB of RAM, please keep in mind that some of it will be reserved to our host software.
 
 You are allowed to install any pip package. Simply edit `requirements.txt`. We will run pip before all runs on our servers.

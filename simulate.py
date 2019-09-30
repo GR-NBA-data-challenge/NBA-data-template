@@ -16,8 +16,8 @@ def entry():
         from src import main
         log('User defined predict module loaded')
         required_predictions = [
-            {'a': 'teamA', 'b': 'teamB'},
-            {'a': 'teamC', 'b': 'teamD'}
+            {'teamA': 'teamA', 'teamB': 'teamB'},
+            {'teamA': 'teamC', 'teamB': 'teamD'}
         ]
         log('Starting call to user defined function')
         result = main.predict(required_predictions, historical_data, current_season_matches, log)
