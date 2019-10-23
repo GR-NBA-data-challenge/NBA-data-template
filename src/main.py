@@ -14,16 +14,25 @@
 #     The result format should be a list of {"teamA": "X", "teamB": "Y", "diff": 25, "sum": 163}
 def predict(required_predictions, data_loader, log):
     # This example code predicts that the first team always wins every match
+
+    # Load games data for the 2020 season.
+    # Seasons from 2009 onwards are available, including POST seasons, such as 2010POST
     games2010 = data_loader.getSeason('2010')
-    log(f'{games2010}')
+    log(f'Loaded {len(games2010)} 2010 games')
+
+    # Loading a season that is ahead of the cutoff training time returns no results.
+    # In this case, the default cutoff time is in 2019, so loading 2020 data returns no results.
+    # You can change the cutoff time by passing to simulate.py
+    #     --cutoff YYYY-MM-DD
+    games2020 = data_loader.getSeason('2020')
+    log(f'Loaded {len(games2020)} 2019 games')
     result = []
     for match in required_predictions:
         # In this example we always predict that teamA wins by 100 points
         result.append({
-            "teamA": match["teamA"],
-            "teamB": match["teamB"],
-            "diff": 100,
-            "sum": 300
+            'gameId': match['gameId'],
+            'sum': 999,
+            'diff': 1
         })
     log('finished')
     return result
