@@ -1,6 +1,5 @@
 # This is the main function you are requested to define.
-# required_predictions: a list of matches that you should predict. Each match is a dictionary
-#     containing two keys: "teamA", the name of the first team, and "teamB", the name of the second team.
+# required_predictions: a list of matches that you should predict
 # data_loader: a NbaDataLoader class instance.
 #     Contains getSeason, getGame and getPlayers methods. Please refer to simulate.py for details about
 #     the provided methods.
@@ -9,12 +8,9 @@
 #     All logs sent to this logger can be retrieved from our servers (up to a maximum size), so
 #     use this to debug issues when running your code in our simulations.
 # (return): You should return, for each match requested in required_predictions, two numbers:
-#     The difference between the scores: teamAscore - teamBscore
-#     And the sum of the scores: teamAscore + teamBscore
-#     The result format should be a list of {"teamA": "X", "teamB": "Y", "diff": 25, "sum": 163}
+#     The difference between the scores: homeScore - awayScore
+#     And the sum of the scores: homeScore - awayScore
 def predict(required_predictions, data_loader, log):
-    # This example code predicts that the first team always wins every match
-
     # Load games data for the 2020 season.
     # Seasons from 2009 onwards are available, including POST seasons, such as 2010POST
     games2010 = data_loader.getSeason('2010')
@@ -26,9 +22,17 @@ def predict(required_predictions, data_loader, log):
     #     --cutoff YYYY-MM-DD
     games2020 = data_loader.getSeason('2020')
     log(f'Loaded {len(games2020)} 2019 games')
+
+    # You can load an individual match's data
+    aGame = data_loader.getGame(games2010[100]['gameId'])
+    log(f'Game 100 in the 2010 database is {aGame}')
+
+    # You can also load the full players data for an entire season
+    full2010seasonPlayers = data_loader.getPlayers('2010')
+    log(f'Loaded {len(full2010seasonPlayers)} 2010 season player rows')
+
     result = []
     for match in required_predictions:
-        # In this example we always predict that teamA wins by 100 points
         result.append({
             'gameId': match['gameId'],
             'sum': 999,

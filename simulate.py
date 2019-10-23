@@ -64,13 +64,15 @@ class NbaDataLoader:
     # The gameId is a numerical game identifier.
     # You can find the gameId from the results of getSeason
     def getGame(self, gameId: int):
-        r = requests.get(f'https://{env}api.nbadatachallenge.com/data/games/{urllib.parse.quote(gameId)}')
+        r = requests.get(f'https://{env}api.nbadatachallenge.com/data/games/{urllib.parse.quote(str(gameId))}')
         checkStatus(r)
         data = r.json()
-        if data['dateTime'] < args.cutoff:
-            return data
-        else:
-            return None
+        result = []
+        for d in data:
+            dateTime = d['dateTime']
+            if dateTime < args.cutoff:
+                result.append(d)
+        return result
     
     # Obtain full player data about all the games in a season.
     def getPlayers(self, season: str):
