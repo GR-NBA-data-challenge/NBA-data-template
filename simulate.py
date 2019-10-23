@@ -6,6 +6,7 @@ import urllib.parse
 import sys
 import re
 import traceback
+import json
 
 parser = argparse.ArgumentParser()
 
@@ -18,6 +19,12 @@ parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 # It is relative to the current file.
 parser.add_argument('--userpath', help=argparse.SUPPRESS, default='src')
 
+# Hidden argument to write out the result to a file
+parser.add_argument('--resultpath', help=argparse.SUPPRESS, default=None)
+
+# Hidden argument to write out logs to a file
+parser.add_argument('--logpath', help=argparse.SUPPRESS, default=None)
+
 args = parser.parse_args()
 
 env = 'dev' if args.dev else 'prod'
@@ -27,6 +34,9 @@ currdir = os.path.abspath(os.path.dirname(__file__))
 userpath = os.path.abspath(os.path.join(currdir, args.userpath))
 
 sys.path.append(userpath)
+
+if args.logpath is not None:
+    logfile = open(args.logpath, 'a')
 
 def checkStatus(response):
     if response.status_code < 200 or response.status_code > 299:
@@ -80,7 +90,10 @@ def loadPredictions():
     return r.json()
 
 def log(msg):
-    print(f'{datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()} {msg}')
+    formatted = f'{datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()} {msg}'
+    print(formatted)
+    if args.logpath is not None:
+        logfile.write(formatted + '\n')
 
 def findByGameId(results, gameId):
     for r in results:
@@ -165,7 +178,12 @@ def entry():
         result = sanitizeResult(result, predictionsFull)
         displayPredictionsAndResults(result, predictionsFull)
 
-        # TODO write to file if specified
+        if args.resultpath is not None:
+            log('Writing result...')
+            resultfile = open(args.resultpath, 'w')
+            resultfile.write(json.dumps(result))
+            resultfile.close()
+
     except Exception:
         log(f'An error occurred: {traceback.format_exc()}')
 
