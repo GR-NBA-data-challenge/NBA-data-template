@@ -3,16 +3,28 @@ import datetime
 import argparse
 import requests
 import urllib.parse
+import sys
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--dev', help='Connect to the dev servers instead of the production ones', action="store_true")
+parser.add_argument('--cutoff', help='A datestring in format YYYY-MM-DD. The end of the training daterange, and the start of the week to be predicted. All data after the cutoff is automatically removed to avoid look-ahead', default='2019-01-01')
 
-# TODO overridable path where to find the user defined code
+# Hidden argument to switch to the dev server
+parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
+
+# Hidden argument to change the path in which to look the user code.
+# It is relative to the current file.
+parser.add_argument('--userpath', help=argparse.SUPPRESS, default='src')
 
 args = parser.parse_args()
 
 env = 'dev' if args.dev else 'prod'
+
+currdir = os.path.abspath(os.path.dirname(__file__))
+
+userpath = os.path.abspath(os.path.join(currdir, args.userpath))
+
+sys.path.append(userpath)
 
 class NbaDataLoader:
     def __init__(self):
@@ -54,7 +66,7 @@ def log(msg):
 def entry():
     try:
         log('Loading user defined predict module')
-        from src import main
+        import main
         log('User defined predict module loaded')
         required_predictions = [
             {'teamA': 'teamA', 'teamB': 'teamB'},
