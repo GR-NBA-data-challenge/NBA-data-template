@@ -15,6 +15,7 @@ def predict(required_predictions, data_loader, log):
     # Seasons from 2009 onwards are available, including POST seasons, such as 2010POST
     games2010 = data_loader.getSeason('2010')
     log(f'Loaded {len(games2010)} 2010 games')
+    log(f'First entry in 2010 season is {games2010[0]}')
 
     # Loading a season that is ahead of the cutoff training time returns no results.
     # In this case, the default cutoff time is in 2019, so loading 2020 data returns no results.
