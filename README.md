@@ -55,8 +55,8 @@ The data is automatically filtered to prevent look-aheads.
 
 You can use any pip package in your code. Just make sure that `requirements.txt` is updated.
 
-If you need to re-generate or update `requirements.txt`, you can use
+You can check the pip dependencies installed on your system with:
 
 ```
-pip3 freeze > requirements.txt
+pip3 freeze
 ```
