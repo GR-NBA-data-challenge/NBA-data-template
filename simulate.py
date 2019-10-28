@@ -38,9 +38,11 @@ sys.path.append(userpath)
 if args.logpath is not None:
     logfile = open(args.logpath, 'a')
 
-def checkStatus(response):
-    if response.status_code < 200 or response.status_code > 299:
-        raise Exception(f'Could not obtain season data for season {season}. Server responded with status code {response.status_code}')
+def getRequest(url):
+    r = requests.get(url)
+    if r.status_code < 200 or r.status_code > 299:
+        raise Exception(f'Could not obtain data from url {url}. Server responded with status code {r.status_code}')
+    return r.json()
 
 class NbaDataLoader:
     def __init__(self):
@@ -50,9 +52,7 @@ class NbaDataLoader:
     # Seasons are strings such as '2009' or '2010POST'
     # The earliest available season is '2009'
     def getSeason(self, season: str):
-        r = requests.get(f'https://{env}api.nbadatachallenge.com/data/seasons/{urllib.parse.quote(season)}')
-        checkStatus(r)
-        data = r.json()
+        data = getRequest(f'https://{env}api.nbadatachallenge.com/data/seasons/{urllib.parse.quote(season)}')
         result = []
         for d in data:
             dateTime = d['dateTime']
@@ -64,9 +64,7 @@ class NbaDataLoader:
     # The gameId is a numerical game identifier.
     # You can find the gameId from the results of getSeason
     def getGame(self, gameId: int):
-        r = requests.get(f'https://{env}api.nbadatachallenge.com/data/games/{urllib.parse.quote(str(gameId))}')
-        checkStatus(r)
-        data = r.json()
+        data = getRequest(f'https://{env}api.nbadatachallenge.com/data/games/{urllib.parse.quote(str(gameId))}')
         result = []
         for d in data:
             dateTime = d['dateTime']
@@ -76,9 +74,7 @@ class NbaDataLoader:
     
     # Obtain full player data about all the games in a season.
     def getPlayers(self, season: str):
-        r = requests.get(f'https://{env}api.nbadatachallenge.com/data/gameplayersfull/{urllib.parse.quote(season)}')
-        checkStatus(r)
-        data = r.json()
+        data = getRequest(f'https://{env}api.nbadatachallenge.com/data/gameplayersfull/{urllib.parse.quote(season)}')
         result = []
         for d in data:
             dateTime = d['dateTime']
@@ -87,9 +83,7 @@ class NbaDataLoader:
         return result
 
 def loadPredictions():
-    r = requests.get(f'https://{env}api.nbadatachallenge.com/data/predictions/{urllib.parse.quote(args.cutoff)}')
-    checkStatus(r)
-    return r.json()
+    return getRequest(f'https://{env}api.nbadatachallenge.com/data/predictions/{urllib.parse.quote(args.cutoff)}')
 
 def log(msg):
     formatted = f'{datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()} {msg}'
