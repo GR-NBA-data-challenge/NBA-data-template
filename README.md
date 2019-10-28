@@ -15,7 +15,7 @@ git push --mirror https://github.com/YOURUSERNAME/NBAChallenge.git
 cd ..
 rm -rf NBA-data-template.git
 ```
-Add `GRNBADataChallengeReader` as a collaborator
+Add `GRNBADataChallengeReader` as a collaborator. Open your repository page in a browser, click on Settings, then Collaborators.
 
 This allows us to access your code while keeping it secret from other participants.
 

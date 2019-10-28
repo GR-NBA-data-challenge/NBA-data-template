@@ -11,7 +11,7 @@
 #     The difference between the scores: homeScore - awayScore
 #     And the sum of the scores: homeScore - awayScore
 def predict(required_predictions, data_loader, log):
-    # Load games data for the 2020 season.
+    # Load games data for the 2010 season.
     # Seasons from 2009 onwards are available, including POST seasons, such as 2010POST
     games2010 = data_loader.getSeason('2010')
     log(f'Loaded {len(games2010)} 2010 games')
