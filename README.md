@@ -66,3 +66,11 @@ You can check the pip dependencies installed on your system with:
 ```
 pip3 freeze
 ```
+
+# Working with a Jupyter Notebook
+
+We provide for convenience a Jupyter Notebook file.
+
+Please note that the notebook is not considered as part of your submission. The main submission is `src/main.py` and the files and libraries it refers to.
+
+If you don't have jupyter notebook installed, we recommend obtaining a Python3 Miniconda environment https://docs.conda.io/en/latest/miniconda.html in which you can install Jupyter.
