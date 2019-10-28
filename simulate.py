@@ -56,7 +56,7 @@ class NbaDataLoader:
         result = []
         for d in data:
             dateTime = d['dateTime']
-            if dateTime < args.cutoff:
+            if (dateTime is not None) and dateTime < args.cutoff:
                 result.append(d)
         return result
     
