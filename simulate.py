@@ -1,12 +1,9 @@
-import os
-import datetime
 import argparse
-import requests
-import urllib.parse
+import datetime
+import os
 import sys
-import re
 import traceback
-import json
+import libsimulation
 
 parser = argparse.ArgumentParser()
 
@@ -35,152 +32,43 @@ userpath = os.path.abspath(os.path.join(currdir, args.userpath))
 
 sys.path.append(userpath)
 
-if args.logpath is not None:
-    logfile = open(args.logpath, 'a')
+class MultiLogger:
+    def __init__(self, logPath):
+        self.logPath = logPath
+        self.logFile = None
 
-def getRequest(url):
-    r = requests.get(url)
-    if r.status_code < 200 or r.status_code > 299:
-        raise Exception(f'Could not obtain data from url {url}. Server responded with status code {r.status_code}')
-    return r.json()
+    def __enter__(self):
+        if self.logPath is not None:
+            self.logFile = open(self.logPath, 'a')
+        return self
 
-class NbaDataLoader:
-    def __init__(self):
-        pass
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.logFile is not None:
+            self.logFile.close()
 
-    # Obtain the games of a season.
-    # Seasons are strings such as '2009' or '2010POST'
-    # The earliest available season is '2009'
-    def getSeason(self, season: str):
-        data = getRequest(f'https://{env}api.nbadatachallenge.com/data/seasons/{urllib.parse.quote(season)}')
-        result = []
-        for d in data:
-            dateTime = d['dateTime']
-            if (dateTime is not None) and dateTime < args.cutoff:
-                result.append(d)
-        return result
-    
-    # Obtain a single game data
-    # The gameId is a numerical game identifier.
-    # You can find the gameId from the results of getSeason
-    def getGame(self, gameId: int):
-        data = getRequest(f'https://{env}api.nbadatachallenge.com/data/games/{urllib.parse.quote(str(gameId))}')
-        result = []
-        for d in data:
-            dateTime = d['dateTime']
-            if dateTime < args.cutoff:
-                result.append(d)
-        return result
-    
-    # Obtain full player data about all the games in a season.
-    def getPlayers(self, season: str):
-        data = getRequest(f'https://{env}api.nbadatachallenge.com/data/gameplayersfull/{urllib.parse.quote(season)}')
-        result = []
-        for d in data:
-            dateTime = d['dateTime']
-            if dateTime < args.cutoff:
-                result.append(d)
-        return result
+    def log(self, msg):
+        formatted = f'{datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()} {msg}'
+        print(formatted)
+        if self.logFile is not None:
+            self.logFile.write(formatted + '\n')
 
-def loadPredictions():
-    return getRequest(f'https://{env}api.nbadatachallenge.com/data/predictions/{urllib.parse.quote(args.cutoff)}')
+def simulate():
+    with MultiLogger(args.logpath) as log:
+        try:
+            settings = libsimulation.SimulationSettings()
+            settings.env = env
+            settings.cutoff = args.cutoff
+            settings.resultpath = args.resultpath
+            settings.log = lambda msg: log.log(msg)
+            # Load the user-defined main module
+            import main
+            settings.predict = main.predict
 
-def log(msg):
-    formatted = f'{datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()} {msg}'
-    print(formatted)
-    if args.logpath is not None:
-        logfile.write(formatted + '\n')
+            # Start simulation
+            libsimulation.runSimulation(settings)
+        except:
+            log.log(f'An error occurred: {traceback.format_exc()}')
+            sys.exit(1)
 
-def findByGameId(results, gameId):
-    for r in results:
-        if r['gameId'] == gameId:
-            return r
-    return None
-
-def getField(doc, field):
-    if doc is None:
-        return 'None'
-    if field in doc:
-        return doc[field]
-    else:
-        return 'None'
-
-def computeSum(a, b):
-    if a is None or b is None:
-        return None
-    return a + b
-
-def computeDiff(a, b):
-    if a is None or b is None:
-        return None
-    return a - b
-
-def displayPredictionsAndResults(results, actual):
-    for game in actual:
-        gameId = game['gameId']
-        resultGame = findByGameId(results, gameId)
-        homeScore = getField(game, 'homeScore')
-        awayScore = getField(game, 'awayScore')
-        actualSum = computeSum(homeScore, awayScore)
-        actualDiff = computeDiff(homeScore, awayScore)
-        sumPredicted = getField(resultGame, 'sum')
-        awayPredicted = getField(resultGame, 'diff')
-        log(f'Game {gameId}. Actual results: home {homeScore} - away {awayScore}. Actual: sum {actualSum} - diff {actualDiff}. Predicted results: sum {sumPredicted} - diff {awayPredicted}')
-
-def sanitizeResult(results, predictions):
-    if len(results) != len(predictions):
-        raise Exception(f'User returned {len(results)} predictions, but expecting {len(predictions)} predictions')
-    sanitized = []
-    for result in results:
-        if not isinstance(result['gameId'], int):
-            raise Exception(f'gameId field in the prediction must be an int')
-        if not isinstance(result['sum'], int):
-            raise Exception(f'sum field in the prediction must be an int')
-        if not isinstance(result['diff'], int):
-            raise Exception(f'diff field in the prediction must be an int')
-        sanitized.append({
-            'gameId': result['gameId'],
-            'sum': result['sum'],
-            'diff': result['diff']
-        })
-    return sanitized
-
-def entry():
-    try:
-        if not re.match('^\d\d\d\d-\d\d-\d\d$', args.cutoff):
-            log(f'--cutoff argument value is not valid. Expected a YYYY-MM-DD format')
-            return
-
-        log(f'Loading prediction matches starting from {args.cutoff}')
-        predictionsFull = loadPredictions()
-        predictions = []
-        for prediction in predictionsFull:
-            predictions.append({
-                'date': prediction['date'],
-                'homeTeam': prediction['homeTeam'],
-                'awayTeam': prediction['awayTeam'],
-                'gameId': prediction['gameId']
-            })
-
-        log('Loading user defined predict module')
-        import main
-        log('User defined predict module loaded')
-
-        dataLoader = NbaDataLoader()
-
-        log('Starting call to user defined function')
-        result = main.predict(predictions, dataLoader, log)
-        log('User defined function completed')
-        result = sanitizeResult(result, predictionsFull)
-        displayPredictionsAndResults(result, predictionsFull)
-
-        if args.resultpath is not None:
-            log('Writing result...')
-            resultfile = open(args.resultpath, 'w')
-            resultfile.write(json.dumps(result))
-            resultfile.close()
-
-    except Exception:
-        log(f'An error occurred: {traceback.format_exc()}')
-
-entry()
+if __name__== "__main__":
+    simulate()
