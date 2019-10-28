@@ -27,7 +27,7 @@ git clone https://github.com/YOURUSERNAME/YOURREPOSITORY.git
 
 # Requirements
 
-The only requirement is Python3.
+The only requirement is Python3. We will be using version 3.6 during tests.
 
 Using a virtual environment is entirely optional.
 
