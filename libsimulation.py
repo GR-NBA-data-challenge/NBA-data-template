@@ -11,7 +11,7 @@ class SimulationSettings:
     log: Callable
     predict: Callable
 
-def getRequest(url):
+def _getRequest(url):
     r = requests.get(url)
     if r.status_code < 200 or r.status_code > 299:
         raise Exception(f'Could not obtain data from url {url}. Server responded with status code {r.status_code}')
@@ -25,7 +25,7 @@ class NbaDataLoader:
     # Seasons are strings such as '2009' or '2010POST'
     # The earliest available season is '2009'
     def getSeason(self, season: str):
-        data = getRequest(f'https://{self.settings.env}api.nbadatachallenge.com/data/seasons/{urllib.parse.quote(season)}')
+        data = _getRequest(f'https://{self.settings.env}api.nbadatachallenge.com/data/seasons/{urllib.parse.quote(season)}')
         result = []
         for d in data:
             dateTime = d['dateTime']
@@ -37,7 +37,7 @@ class NbaDataLoader:
     # The gameId is a numerical game identifier.
     # You can find the gameId from the results of getSeason
     def getGame(self, gameId: int):
-        data = getRequest(f'https://{self.settings.env}api.nbadatachallenge.com/data/games/{urllib.parse.quote(str(gameId))}')
+        data = _getRequest(f'https://{self.settings.env}api.nbadatachallenge.com/data/games/{urllib.parse.quote(str(gameId))}')
         result = []
         for d in data:
             dateTime = d['dateTime']
@@ -47,7 +47,7 @@ class NbaDataLoader:
 
     # Obtain full player data about all the games in a season.
     def getPlayers(self, season: str):
-        data = getRequest(f'https://{self.settings.env}api.nbadatachallenge.com/data/gameplayersfull/{urllib.parse.quote(season)}')
+        data = _getRequest(f'https://{self.settings.env}api.nbadatachallenge.com/data/gameplayersfull/{urllib.parse.quote(season)}')
         result = []
         for d in data:
             dateTime = d['dateTime']
@@ -55,10 +55,10 @@ class NbaDataLoader:
                 result.append(d)
         return result
 
-def loadPredictions(settings: SimulationSettings):
-    return getRequest(f'https://{settings.env}api.nbadatachallenge.com/data/predictions/{urllib.parse.quote(settings.cutoff)}')
+def _loadPredictions(settings: SimulationSettings):
+    return _getRequest(f'https://{settings.env}api.nbadatachallenge.com/data/predictions/{urllib.parse.quote(settings.cutoff)}')
 
-def sanitizeResult(results, predictions):
+def _sanitizeResult(results, predictions):
     if len(results) != len(predictions):
         raise Exception(f'User returned {len(results)} predictions, but expecting {len(predictions)} predictions')
     sanitized = []
@@ -76,13 +76,13 @@ def sanitizeResult(results, predictions):
         })
     return sanitized
 
-def findByGameId(results, gameId):
+def _findByGameId(results, gameId):
     for r in results:
         if r['gameId'] == gameId:
             return r
     return None
 
-def getField(doc, field):
+def _getField(doc, field):
     if doc is None:
         return 'None'
     if field in doc:
@@ -90,26 +90,26 @@ def getField(doc, field):
     else:
         return 'None'
 
-def computeSum(a, b):
+def _computeSum(a, b):
     if a is None or b is None:
         return None
     return a + b
 
-def computeDiff(a, b):
+def _computeDiff(a, b):
     if a is None or b is None:
         return None
     return a - b
 
-def displayPredictionsAndResults(results, actual, log):
+def _displayPredictionsAndResults(results, actual, log):
     for game in actual:
         gameId = game['gameId']
-        resultGame = findByGameId(results, gameId)
-        homeScore = getField(game, 'homeScore')
-        awayScore = getField(game, 'awayScore')
-        actualSum = computeSum(homeScore, awayScore)
-        actualDiff = computeDiff(homeScore, awayScore)
-        sumPredicted = getField(resultGame, 'sum')
-        awayPredicted = getField(resultGame, 'diff')
+        resultGame = _findByGameId(results, gameId)
+        homeScore = _getField(game, 'homeScore')
+        awayScore = _getField(game, 'awayScore')
+        actualSum = _computeSum(homeScore, awayScore)
+        actualDiff = _computeDiff(homeScore, awayScore)
+        sumPredicted = _getField(resultGame, 'sum')
+        awayPredicted = _getField(resultGame, 'diff')
         log(f'Game {gameId}. Actual results: home {homeScore} - away {awayScore}. '
             f'Actual: sum {actualSum} - diff {actualDiff}. '
             f'Predicted results: sum {sumPredicted} - diff {awayPredicted}')
@@ -122,7 +122,7 @@ def runSimulation(settings: SimulationSettings) -> None:
         return
 
     log(f'Loading prediction matches starting from {settings.cutoff}')
-    predictionsFull = loadPredictions(settings)
+    predictionsFull = _loadPredictions(settings)
     predictions = []
     for prediction in predictionsFull:
         predictions.append({
@@ -137,8 +137,8 @@ def runSimulation(settings: SimulationSettings) -> None:
     log('Starting call to user defined function')
     result = settings.predict(predictions, dataLoader, log)
     log('User defined function completed')
-    result = sanitizeResult(result, predictionsFull)
-    displayPredictionsAndResults(result, predictionsFull, log)
+    result = _sanitizeResult(result, predictionsFull)
+    _displayPredictionsAndResults(result, predictionsFull, log)
 
     if settings.resultpath is not None:
         log('Writing result...')
