@@ -1,14 +1,15 @@
 (work in progress)
 
-# NBA-data-template
+# G-Research NBA Data Challenge code template
 
-This is the template of the given code.
+This template code is here to help you get started on the G this-Research NBA Data Challenge. You will add your own nba prediction code to this template, and we will access it
 
-Instructions to obtain the skeleton repository:
-* 
-First, create a repository on your personal GitHub account, named for example `NBAChallenge`.
-Follow the instructions to create a duplicate of our template.
-Please notice that if you choose to Fork, you won't be able to set the forked repository to Private.
+Instructions to obtain the template code:
+
+You should have just created a new repo (following the first step of the signup instructions from nbadatachallenge.com).
+
+Now create a duplicate of our template in your repo, by running the following command lines in a terminal on your computer.
+*Please note that if you choose to Fork instead, you won't be able to set the forked repository to Private.*
 ```
 git clone --bare https://github.com/GR-NBA-data-challenge/NBA-data-template.git
 cd NBA-data-template.git
@@ -16,8 +17,7 @@ git push --mirror https://github.com/YOURUSERNAME/YOURREPOSITORY.git
 cd ..
 rm -rf NBA-data-template.git
 ```
-Add `GRNBADataChallengeReader` as a collaborator. Open your repository page in a browser, click on Settings, then Collaborators.
-
+Add `GRNBADataChallengeReader` as a collaborator (open your repository page in a browser, click on Settings, then Collaborators).
 This allows us to access your code while keeping it secret from other participants.
 
 You can now clone your own repository:
