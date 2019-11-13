@@ -1,8 +1,6 @@
 import argparse
-import datetime
 import os
 import sys
-import traceback
 import libsimulation
 
 parser = argparse.ArgumentParser()
@@ -19,9 +17,6 @@ parser.add_argument('--userpath', help=argparse.SUPPRESS, default='src')
 # Hidden argument to write out the result to a file
 parser.add_argument('--resultpath', help=argparse.SUPPRESS, default=None)
 
-# Hidden argument to write out logs to a file
-parser.add_argument('--logpath', help=argparse.SUPPRESS, default=None)
-
 args = parser.parse_args()
 
 env = 'dev' if args.dev else 'prod'
@@ -32,43 +27,17 @@ userpath = os.path.abspath(os.path.join(currdir, args.userpath))
 
 sys.path.append(userpath)
 
-class MultiLogger:
-    def __init__(self, logPath):
-        self.logPath = logPath
-        self.logFile = None
-
-    def __enter__(self):
-        if self.logPath is not None:
-            self.logFile = open(self.logPath, 'a')
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.logFile is not None:
-            self.logFile.close()
-
-    def log(self, msg):
-        formatted = f'{datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()} {msg}'
-        print(formatted)
-        if self.logFile is not None:
-            self.logFile.write(formatted + '\n')
-
 def simulate():
-    with MultiLogger(args.logpath) as log:
-        try:
-            settings = libsimulation.SimulationSettings()
-            settings.env = env
-            settings.cutoff = args.cutoff
-            settings.resultpath = args.resultpath
-            settings.log = lambda msg: log.log(msg)
-            # Load the user-defined main module
-            import main
-            settings.predict = main.predict
+    settings = libsimulation.SimulationSettings()
+    settings.env = env
+    settings.cutoff = args.cutoff
+    settings.resultpath = args.resultpath
+    # Load the user-defined main module
+    import main
+    settings.predict = main.predict
 
-            # Start simulation
-            libsimulation.runSimulation(settings)
-        except:
-            log.log(f'An error occurred: {traceback.format_exc()}')
-            sys.exit(1)
+    # Start simulation
+    libsimulation.runSimulation(settings)
 
 if __name__== "__main__":
     simulate()
