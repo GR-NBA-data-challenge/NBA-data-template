@@ -27,7 +27,7 @@ git clone https://github.com/YOURUSERNAME/YOURREPOSITORY.git
 
 # Requirements
 
-The only requirement is Python3. We will be using version 3.6 during tests.
+You need a working Python 3 environment on your computer. We will use Python 3.7.4 from Miniconda.
 
 Using a virtual environment is entirely optional.
 
@@ -60,6 +60,8 @@ The data is automatically filtered to prevent look-aheads.
 # Installing additional packages
 
 You can use any pip package in your code. Just make sure that `requirements.txt` is updated.
+
+As we use the Miniconda python distribution, any package available with pip can be used.
 
 You can check the pip dependencies installed on your system with:
 
