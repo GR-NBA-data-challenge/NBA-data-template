@@ -7,9 +7,9 @@ import pandas
 import time
 
 class SimulationSettings:
-    env: str
+    env: str = 'prod'
     cutoff: str
-    resultpath: str
+    resultpath: str = None
     predict: Callable
 
 def _getRequest(url):
@@ -21,8 +21,6 @@ def _getRequest(url):
 class NbaDataLoader:
     def __init__(self, settings: SimulationSettings):
         self.settings = settings
-        if self.settings.env is None:
-            self.settings.env = 'prod'
         self.playerColumns = [
             'gameId',
             'name',
