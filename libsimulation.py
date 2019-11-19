@@ -47,7 +47,13 @@ class NbaDataLoader:
             dateTime = d['dateTime']
             if (dateTime is not None) and dateTime < self.settings.cutoff:
                 result.append(d)
-        return pandas.DataFrame(result, columns=['gameId', 'dateTime', 'homeTeam', 'awayTeam', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status'])
+        if len(result) == 0:
+            return pandas.DataFrame()
+        result = pandas.DataFrame(result, columns=['gameId', 'dateTime', 'homeTeam', 'awayTeam', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status'])
+        result['pointsSum'] = result.eval('homeScore + awayScore')
+        result['pointsDiff'] = result.eval('homeScore - awayScore')
+        result = result[['gameId', 'dateTime', 'homeTeam', 'awayTeam', 'pointsDiff', 'pointsSum', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status']]
+        return result
 
     # Obtain a single game data
     # The gameId is a numerical game identifier.
@@ -81,14 +87,14 @@ def _sanitizeResult(results, predictions):
     for result in results:
         if not isinstance(result['gameId'], int):
             raise Exception(f'gameId field in the prediction must be an int')
-        if not isinstance(result['sum'], float):
-            raise Exception(f'sum field in the prediction must be a float')
-        if not isinstance(result['diff'], float):
-            raise Exception(f'diff field in the prediction must be a float')
+        if not (isinstance(result['predictedSum'], float) or isinstance(result['predictedSum'], int)):
+            raise Exception(f'predictedSum field in the prediction must be a float or int')
+        if not (isinstance(result['predictedDiff'], float) or isinstance(result['predictedDiff'], int)):
+            raise Exception(f'predictedDiff field in the prediction must be a float or int')
         sanitized.append({
             'gameId': result['gameId'],
-            'sum': result['sum'],
-            'diff': result['diff']
+            'predictedSum': result['predictedSum'],
+            'predictedDiff': result['predictedDiff']
         })
     return sanitized
 
@@ -124,11 +130,11 @@ def _displayPredictionsAndResults(results, actual):
         awayScore = _getField(game, 'awayScore')
         actualSum = _computeSum(homeScore, awayScore)
         actualDiff = _computeDiff(homeScore, awayScore)
-        sumPredicted = _getField(resultGame, 'sum')
-        awayPredicted = _getField(resultGame, 'diff')
+        predictedSum = _getField(resultGame, 'predictedSum')
+        predictedDiff = _getField(resultGame, 'predictedDiff')
         print(f'Game {gameId}. Actual results: home {homeScore} - away {awayScore}. '
             f'Actual: sum {actualSum} - diff {actualDiff}. '
-            f'Predicted results: sum {sumPredicted} - diff {awayPredicted}')
+            f'Predicted results: sum {predictedSum} - predictedDiff {predictedDiff}')
 
 def runSimulation(settings: SimulationSettings) -> None:
     startTime = time.time()
@@ -146,7 +152,7 @@ def runSimulation(settings: SimulationSettings) -> None:
             'awayTeam': prediction['awayTeam'],
             'gameId': prediction['gameId']
         })
-    predictions = pandas.DataFrame(predictions, columns=['gameId', 'date', 'homeTeam', 'awayTeam', 'sum', 'diff'])
+    predictions = pandas.DataFrame(predictions, columns=['gameId', 'date', 'homeTeam', 'awayTeam', 'predictedSum', 'predictedDiff'])
 
     dataLoader = NbaDataLoader(settings)
 
