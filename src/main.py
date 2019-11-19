@@ -32,6 +32,6 @@ def predict(required_predictions, data_loader):
 
     # You should fill in the sum and diff fields of the required predictions
     for index, match in required_predictions.iterrows():
-        required_predictions.at[index, 'sum'] = 999
-        required_predictions.at[index, 'diff'] = 1
+        required_predictions.at[index, 'predictedSum'] = 999
+        required_predictions.at[index, 'predictedDiff'] = 1
     print('finished')

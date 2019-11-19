@@ -31,6 +31,12 @@ You need a working Python 3 environment on your computer. We will use Python 3.7
 
 Using a virtual environment is entirely optional.
 
+The first time you run the code, you need to install the python dependencies:
+
+```
+pip install -r requirements.txt
+```
+
 # Where to write your code
 
 Write your code in the `src` directory. You should extend the function in `src/main.py`. Please read the in-code comments for more details.

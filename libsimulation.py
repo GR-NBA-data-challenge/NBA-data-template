@@ -136,7 +136,29 @@ def _displayPredictionsAndResults(results, actual):
             f'Actual: sum {actualSum} - diff {actualDiff}. '
             f'Predicted results: sum {predictedSum} - predictedDiff {predictedDiff}')
 
-def runSimulation(settings: SimulationSettings) -> None:
+
+def single_game_error(predictedDiff, predictedSum, actualDiff, actualSum):
+    return abs(predictedDiff - actualDiff) + abs(predictedSum - actualSum)
+
+
+def score_predictions(predictions):
+    x1 = predictions['predictedDiff']
+    x2 = predictions['predictedSum']
+    y1 = predictions['pointsDiff']
+    y2 = predictions['pointsSum']
+
+    ## baseline model
+    x1_baseline = 0  ## no information about who will win
+    x2_baseline = 200  ## avergae points total between 2009 and 2016 seasons
+
+    predictions['error'] = single_game_error(x1, x2, y1, y2)
+    predictions['baseline_error'] = single_game_error(x1_baseline, x2_baseline, y1, y2)
+
+    predictions['score'] = predictions.eval('baseline_error - error')
+
+    return predictions.score.sum()
+
+def runSimulation(settings: SimulationSettings):
     startTime = time.time()
     if not re.match('^\d\d\d\d-\d\d-\d\d$', settings.cutoff):
         print(f'--cutoff argument value is not valid. Expected a YYYY-MM-DD format')
@@ -152,6 +174,7 @@ def runSimulation(settings: SimulationSettings) -> None:
             'awayTeam': prediction['awayTeam'],
             'gameId': prediction['gameId']
         })
+
     predictions = pandas.DataFrame(predictions, columns=['gameId', 'date', 'homeTeam', 'awayTeam', 'predictedSum', 'predictedDiff'])
 
     dataLoader = NbaDataLoader(settings)
@@ -171,3 +194,4 @@ def runSimulation(settings: SimulationSettings) -> None:
 
     elapsedSeconds = time.time() - startTime
     print(f'Completed in {elapsedSeconds} seconds')
+    return predictions
