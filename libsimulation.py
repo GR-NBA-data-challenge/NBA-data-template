@@ -21,6 +21,8 @@ def _getRequest(url):
 class NbaDataLoader:
     def __init__(self, settings: SimulationSettings):
         self.settings = settings
+        if self.settings.env is None:
+            self.settings.env = 'prod'
         self.playerColumns = [
             'gameId',
             'name',
