@@ -7,6 +7,8 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--cutoff', help='A datestring in format YYYY-MM-DD. The end of the training daterange, and the start of the week to be predicted. All data after the cutoff is automatically removed to avoid look-ahead', default='2019-01-01')
 
+parser.add_argument('--cutoffend', help='A datestring in format YYYY-MM-DD. The end of the test period. If not set, this defaults to 7 days after the cutoff. This option can be used to locally test for a range longer than a week', default=None)
+
 # Hidden argument to switch to the dev server
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 
@@ -31,6 +33,7 @@ def simulate():
     settings = libsimulation.SimulationSettings()
     settings.env = env
     settings.cutoff = args.cutoff
+    settings.cutoffend = args.cutoffend
     settings.resultpath = args.resultpath
     # Load the user-defined main module
     import main

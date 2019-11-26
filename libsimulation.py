@@ -9,6 +9,7 @@ import time
 class SimulationSettings:
     env: str = 'prod'
     cutoff: str
+    cutoffend: str = None
     resultpath: str = None
     predict: Callable
 
@@ -78,7 +79,10 @@ class NbaDataLoader:
         return pandas.DataFrame(result, columns=self.playerColumns)
 
 def _loadPredictions(settings: SimulationSettings):
-    return _getRequest(f'https://{settings.env}api.nbadatachallenge.com/data/predictions/{urllib.parse.quote(settings.cutoff)}')
+    url = f'https://{settings.env}api.nbadatachallenge.com/data/predictions/{urllib.parse.quote(settings.cutoff)}'
+    if settings.cutoffend is not None:
+        url += f'/{urllib.parse.quote(settings.cutoffend)}'
+    return _getRequest(url)
 
 def _sanitizeResult(results, predictions):
     if len(results) != len(predictions):
