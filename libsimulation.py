@@ -37,46 +37,102 @@ class NbaDataLoader:
             'rebounds',
             'steals'
         ]
+        self.playerColumnsV2 = [
+            'playerId',
+            'gameId',
+            'name',
+            'dateTime',
+            'team',
+            'teamId',
+            'season',
+            'blocks',
+            'injuryBodyPart',
+            'injuryStatus',
+            'minutes',
+            'points',
+            'position',
+            'rebounds',
+            'steals',
+            'assists'
+        ]
+        self.seasonColumnsV1 = ['gameId', 'dateTime', 'homeTeam', 'awayTeam', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status']
+        self.seasonColumnsV1Out = ['gameId', 'dateTime', 'homeTeam', 'awayTeam', 'pointsDiff', 'pointsSum', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status']
+        self.seasonColumnsV2 = ['gameId', 'dateTime', 'homeTeam', 'homeTeamId', 'awayTeam', 'awayTeamId', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'homeAssists', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'awayAssists', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status']
+        self.seasonColumnsV2Out = ['gameId', 'dateTime', 'homeTeam', 'homeTeamId', 'awayTeam', 'awayTeamId', 'pointsDiff', 'pointsSum', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'homeAssists', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'awayAssists', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status']
 
-    # Obtain the games of a season.
-    # Seasons are strings such as '2009' or '2010POST'
-    # The earliest available season is '2009'
-    def getSeason(self, season: str):
+    def _formatSeasonDf(self, result, columnsIn, columnsOut):
+        if len(result) == 0:
+            return pandas.DataFrame()
+        result = pandas.DataFrame(result, columns=columnsIn)
+        result['pointsSum'] = result.eval('homeScore + awayScore')
+        result['pointsDiff'] = result.eval('homeScore - awayScore')
+        result = result[columnsOut]
+        return result
+        
+    def _getSeason(self, season: str):
         data = _getRequest(f'https://{self.settings.env}api.nbadatachallenge.com/data/seasons/{urllib.parse.quote(season)}')
         result = []
         for d in data:
             dateTime = d['dateTime']
             if (dateTime is not None) and dateTime < self.settings.cutoff:
                 result.append(d)
-        if len(result) == 0:
-            return pandas.DataFrame()
-        result = pandas.DataFrame(result, columns=['gameId', 'dateTime', 'homeTeam', 'awayTeam', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status'])
-        result['pointsSum'] = result.eval('homeScore + awayScore')
-        result['pointsDiff'] = result.eval('homeScore - awayScore')
-        result = result[['gameId', 'dateTime', 'homeTeam', 'awayTeam', 'pointsDiff', 'pointsSum', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status']]
         return result
+        
+    # Obtain the games of a season.
+    # Seasons are strings such as '2009' or '2010POST'
+    # The earliest available season is '2009'
+    def getSeason(self, season: str):
+        result = self._getSeason(season)
+        return self._formatSeasonDf(result, self.seasonColumnsV1, self.seasonColumnsV1Out)
+    
+    # Obtain the games of a season.
+    # Seasons are strings such as '2009' or '2010POST'
+    # The earliest available season is '2009'
+    def getSeasonV2(self, season: str):
+        result = self._getSeason(season)
+        return self._formatSeasonDf(result, self.seasonColumnsV2, self.seasonColumnsV2Out)
 
-    # Obtain a single game data
-    # The gameId is a numerical game identifier.
-    # You can find the gameId from the results of getSeason
-    def getGame(self, gameId: int):
+    def _getGame(self, gameId: int):
         data = _getRequest(f'https://{self.settings.env}api.nbadatachallenge.com/data/games/{urllib.parse.quote(str(gameId))}')
         result = []
         for d in data:
             dateTime = d['dateTime']
             if dateTime < self.settings.cutoff:
                 result.append(d)
+        return result
+    
+    # Obtain a single game data
+    # The gameId is a numerical game identifier.
+    # You can find the gameId from the results of getSeason
+    def getGame(self, gameId: int):
+        result = self._getGame(gameId)
         return pandas.DataFrame(result, columns=self.playerColumns)
+    
+    # Obtain a single game data
+    # The gameId is a numerical game identifier.
+    # You can find the gameId from the results of getSeason
+    def getGameV2(self, gameId: int):
+        result = self._getGame(gameId)
+        return pandas.DataFrame(result, columns=self.playerColumnsV2)
 
-    # Obtain full player data about all the games in a season.
-    def getPlayers(self, season: str):
+    def _getPlayers(self, season: str):
         data = _getRequest(f'https://{self.settings.env}api.nbadatachallenge.com/data/gameplayersfull/{urllib.parse.quote(season)}')
         result = []
         for d in data:
             dateTime = d['dateTime']
             if dateTime < self.settings.cutoff:
                 result.append(d)
+        return result
+    
+    # Obtain full player data about all the games in a season.
+    def getPlayers(self, season: str):
+        result = self._getPlayers(season)
         return pandas.DataFrame(result, columns=self.playerColumns)
+    
+    # Obtain full player data about all the games in a season
+    def getPlayersV2(self, season: str):
+        result = self._getPlayers(season)
+        return pandas.DataFrame(result, columns=self.playerColumnsV2)
 
 def _loadPredictions(settings: SimulationSettings):
     url = f'https://{settings.env}api.nbadatachallenge.com/data/predictions/{urllib.parse.quote(settings.cutoff)}'
