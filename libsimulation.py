@@ -5,6 +5,7 @@ from typing import Callable
 import requests
 import pandas
 import time
+import numpy
 
 class SimulationSettings:
     env: str = 'prod'
@@ -59,6 +60,7 @@ class NbaDataLoader:
         self.seasonColumnsV1Out = ['gameId', 'dateTime', 'homeTeam', 'awayTeam', 'pointsDiff', 'pointsSum', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status']
         self.seasonColumnsV2 = ['gameId', 'dateTime', 'homeTeam', 'homeTeamId', 'awayTeam', 'awayTeamId', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'homeAssists', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'awayAssists', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status']
         self.seasonColumnsV2Out = ['gameId', 'dateTime', 'homeTeam', 'homeTeamId', 'awayTeam', 'awayTeamId', 'pointsDiff', 'pointsSum', 'homeBlocks', 'homeMinutes', 'homeRebounds', 'homeScore', 'homeSteals', 'homeAssists', 'quarter0home', 'quarter1home', 'quarter2home', 'quarter3home', 'awayBlocks', 'awayMinutes', 'awayRebounds', 'awayScore', 'awaySteals', 'awayAssists', 'quarter0away', 'quarter1away', 'quarter2away', 'quarter3away', 'season', 'status']
+        self.playsColumns = ['gameId', 'time', 'homeScore', 'awayScore', 'category', 'type', 'description', 'quarter', 'remainingMinutes', 'remainingSeconds', 'playerId', 'playId']
 
     def _formatSeasonDf(self, result, columnsIn, columnsOut):
         if len(result) == 0:
@@ -133,6 +135,19 @@ class NbaDataLoader:
     def getPlayersV2(self, season: str):
         result = self._getPlayers(season)
         return pandas.DataFrame(result, columns=self.playerColumnsV2)
+
+    # Obtain play-by-play for a specific game
+    def getPlays(self, gameId: int):
+        data = _getRequest(f'https://{self.settings.env}api.nbadatachallenge.com/data/plays/{urllib.parse.quote(str(gameId))}')
+        result = []
+        for d in data:
+            dateTime = d['time']
+            if dateTime < self.settings.cutoff:
+                result.append(d)
+        dataFrame = pandas.DataFrame(result, columns=self.playsColumns)
+        dataFrame['playerId'] = dataFrame['playerId'].fillna(-1)
+        dataFrame['playerId'] = dataFrame['playerId'].astype(numpy.int64)
+        return dataFrame
 
 def _loadPredictions(settings: SimulationSettings):
     url = f'https://{settings.env}api.nbadatachallenge.com/data/predictions/{urllib.parse.quote(settings.cutoff)}'
